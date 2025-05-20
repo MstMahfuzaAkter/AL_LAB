@@ -703,3 +703,366 @@ int main() {
     }
 }
 
+12)Kruskal
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+struct Edge {
+    int u, v, weight;
+    bool operator<(const Edge& other) const {
+        return weight < other.weight;
+    }
+};
+
+class DisjointSet {
+public:
+    vector<int> parent, rank;
+
+    DisjointSet(int n) {
+        parent.resize(n);
+        rank.resize(n, 0);
+        for (int i = 0; i < n; i++) parent[i] = i;
+    }
+
+    int find(int x) {
+        if (parent[x] != x)
+            parent[x] = find(parent[x]);  // Path compression
+        return parent[x];
+    }
+
+    void union_sets(int x, int y) {
+        int rootX = find(x);
+        int rootY = find(y);
+        if (rootX != rootY) {
+            if (rank[rootX] > rank[rootY])
+                parent[rootY] = rootX;
+            else if (rank[rootX] < rank[rootY])
+                parent[rootX] = rootY;
+            else {
+                parent[rootY] = rootX;
+                rank[rootX]++;
+            }
+        }
+    }
+};
+
+vector<Edge> kruskal(vector<Edge>& edges, int n) {
+    sort(edges.begin(), edges.end());  // Sort edges by weight
+    DisjointSet ds(n);
+    vector<Edge> mst;
+
+    for (const Edge& edge : edges) {
+        if (ds.find(edge.u) != ds.find(edge.v)) {
+            mst.push_back(edge);
+            ds.union_sets(edge.u, edge.v);
+        }
+    }
+    return mst;
+}
+
+int main() {
+    int vertices, edges;
+    cout << "Enter number of vertices and edges: ";
+    cin >> vertices >> edges;
+
+    vector<Edge> edgeList(edges);
+    cout << "Enter edges (u v weight):\n";
+    for (int i = 0; i < edges; ++i) {
+        cin >> edgeList[i].u >> edgeList[i].v >> edgeList[i].weight;
+    }
+
+    vector<Edge> mst = kruskal(edgeList, vertices);
+
+    cout << "\nMinimum Spanning Tree:\n";
+    for (const Edge& edge : mst) {
+        cout << edge.u << " - " << edge.v << " (Weight: " << edge.weight << ")\n";
+    }
+
+    return 0;
+}
+13)Prims
+#include <iostream>
+#include <vector>
+#include <queue>
+
+using namespace std;
+
+const int INF = 1e9;
+
+struct Edge {
+    int v, weight;
+    bool operator>(const Edge& other) const {
+        return weight > other.weight;
+    }
+};
+
+void prim(int start, int n, vector<vector<Edge>>& adj) {
+    vector<int> key(n, INF);
+    vector<bool> inMST(n, false);
+    priority_queue<Edge, vector<Edge>, greater<Edge>> pq;
+
+    key[start] = 0;
+    pq.push({start, 0});
+
+    while (!pq.empty()) {
+        int u = pq.top().v;
+        pq.pop();
+
+        if (inMST[u]) continue;
+        inMST[u] = true;
+
+        for (const auto& edge : adj[u]) {
+            int v = edge.v, weight = edge.weight;
+            if (!inMST[v] && weight < key[v]) {
+                key[v] = weight;
+                pq.push({v, key[v]});
+            }
+        }
+    }
+
+    cout << "\nMinimum Spanning Tree (Prim's Algorithm):\n";
+    for (int i = 0; i < n; ++i) {
+        if (key[i] != INF) cout << "Vertex " << i << " included with key value " << key[i] << "\n";
+    }
+}
+
+int main() {
+    int vertices, edges;
+    cout << "Enter number of vertices and edges: ";
+    cin >> vertices >> edges;
+
+    vector<vector<Edge>> adj(vertices);
+    cout << "Enter edges (u v weight):\n";
+    for (int i = 0; i < edges; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});  // Uncomment for undirected graph
+    }
+
+    int start;
+    cout << "Enter starting vertex: ";
+    cin >> start;
+
+    prim(start, vertices, adj);
+
+    return 0;
+}
+14)Dijkstra
+#include <iostream>
+#include <vector>
+#include <queue>
+
+using namespace std;
+
+const int INF = 1e9;
+
+struct Edge {
+    int v, weight;
+    bool operator>(const Edge& other) const {
+        return weight > other.weight;  // Min-heap based on weight
+    }
+};
+
+void dijkstra(int start, int n, vector<vector<Edge>>& adj) {
+    vector<int> dist(n, INF);  // Distance from start to each node
+    priority_queue<Edge, vector<Edge>, greater<Edge>> pq;
+
+    dist[start] = 0;
+    pq.push({start, 0});
+
+    while (!pq.empty()) {
+        int u = pq.top().v;
+        int d = pq.top().weight;
+        pq.pop();
+
+        if (d > dist[u]) continue;  // Ignore outdated distances
+
+        for (const auto& edge : adj[u]) {
+            int v = edge.v, weight = edge.weight;
+            if (dist[u] + weight < dist[v]) {
+                dist[v] = dist[u] + weight;
+                pq.push({v, dist[v]});
+            }
+        }
+    }
+
+    cout << "\nShortest distances from source " << start << ":\n";
+    for (int i = 0; i < n; ++i) {
+        if (dist[i] == INF) cout << "Vertex " << i << ": No path\n";
+        else cout << "Vertex " << i << ": " << dist[i] << "\n";
+    }
+}
+
+int main() {
+    int vertices, edges;
+    cout << "Enter number of vertices and edges: ";
+    cin >> vertices >> edges;
+
+    vector<vector<Edge>> adj(vertices);
+    cout << "Enter edges (u v weight):\n";
+    for (int i = 0; i < edges; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});  // Uncomment for an undirected graph
+    }
+
+    int start;
+    cout << "Enter starting vertex: ";
+    cin >> start;
+
+    dijkstra(start, vertices, adj);
+
+    return 0;
+}
+15)bellman
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+const int INF = 1e9;
+
+struct Edge {
+    int u, v, weight;
+};
+
+void bellman_ford(int vertices, int edges, vector<Edge>& edgeList, int start) {
+    vector<int> dist(vertices, INF);
+    dist[start] = 0;
+
+    // Relax edges |V|-1 times
+    for (int i = 0; i < vertices - 1; i++) {
+        for (const Edge& edge : edgeList) {
+            if (dist[edge.u] != INF && dist[edge.u] + edge.weight < dist[edge.v]) {
+                dist[edge.v] = dist[edge.u] + edge.weight;
+            }
+        }
+    }
+
+    // Check for negative-weight cycles
+    for (const Edge& edge : edgeList) {
+        if (dist[edge.u] != INF && dist[edge.u] + edge.weight < dist[edge.v]) {
+            cout << "Graph contains a negative-weight cycle!\n";
+            return;
+        }
+    }
+
+    cout << "\nShortest distances from source " << start << ":\n";
+    for (int i = 0; i < vertices; ++i) {
+        if (dist[i] == INF) cout << "Vertex " << i << ": No path\n";
+        else cout << "Vertex " << i << ": " << dist[i] << "\n";
+    }
+}
+
+int main() {
+    int vertices, edges;
+    cout << "Enter number of vertices and edges: ";
+    cin >> vertices >> edges;
+
+    vector<Edge> edgeList(edges);
+    cout << "Enter edges (u v weight):\n";
+    for (int i = 0; i < edges; ++i) {
+        cin >> edgeList[i].u >> edgeList[i].v >> edgeList[i].weight;
+    }
+
+    int start;
+    cout << "Enter starting vertex: ";
+    cin >> start;
+
+    bellman_ford(vertices, edges, edgeList, start);
+
+    return 0;
+}
+16)heap
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+class MaxHeap {
+private:
+    vector<int> heap;
+
+    void heapify_up(int index) {
+        int parent = (index - 1) / 2;
+        if (index > 0 && heap[index] > heap[parent]) {
+            swap(heap[index], heap[parent]);
+            heapify_up(parent);
+        }
+    }
+
+    void heapify_down(int index) {
+        int left = 2 * index + 1;
+        int right = 2 * index + 2;
+        int largest = index;
+
+        if (left < heap.size() && heap[left] > heap[largest]) largest = left;
+        if (right < heap.size() && heap[right] > heap[largest]) largest = right;
+
+        if (largest != index) {
+            swap(heap[index], heap[largest]);
+            heapify_down(largest);
+        }
+    }
+
+public:
+    void insert(int val) {
+        heap.push_back(val);
+        heapify_up(heap.size() - 1);
+    }
+
+    void delete_max() {
+        if (heap.empty()) {
+            cout << "Heap is empty! Cannot delete.\n";
+            return;
+        }
+        cout << "Deleted max element: " << heap[0] << endl;
+        heap[0] = heap.back();
+        heap.pop_back();
+        heapify_down(0);
+    }
+
+    void display() {
+        if (heap.empty()) {
+            cout << "Heap is empty!\n";
+            return;
+        }
+        cout << "Heap elements: ";
+        for (int val : heap) cout << val << " ";
+        cout << endl;
+    }
+};
+
+int main() {
+    MaxHeap maxHeap;
+    int choice, value;
+
+    while (true) {
+        cout << "\n1. Insert\n2. Delete Max\n3. Display Heap\n4. Exit\nEnter choice: ";
+        cin >> choice;
+
+        switch (choice) {
+            case 1:
+                cout << "Enter value to insert: ";
+                cin >> value;
+                maxHeap.insert(value);
+                break;
+            case 2:
+                maxHeap.delete_max();
+                break;
+            case 3:
+                maxHeap.display();
+                break;
+            case 4:
+                return 0;
+            default:
+                cout << "Invalid choice, try again!\n";
+        }
+    }
+}
+
